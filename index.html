@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Oʻahu — A Hosted Week</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --paper:#FFF7EA; --card:#FFFFFF; --ink:#0E3A3C; --soft:#5D6B66; --line:#ECE0CC;
+    --planned:#0C8091; --optional:#EE6C3A; --free:#3F9A54; --dinner:#C63E77;
+    --summer:#F2A81E; --winter:#2C79B8; --deep:#0C3F45;
+    --display:'Bricolage Grotesque',system-ui,sans-serif;
+    --body:'Instrument Sans',system-ui,sans-serif;
+    --mono:'Space Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;color-scheme:light;background:var(--paper)}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);
+    line-height:1.55;font-size:17px;
+    background-image:radial-gradient(var(--line) 0.7px,transparent 0.7px);background-size:22px 22px}
+  .wrap{max-width:880px;margin:0 auto;padding:34px 22px 90px}
+  .hero{padding:20px 0 0}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.22em;font-size:12px;color:var(--planned);margin:0 0 10px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(58px,17vw,120px);line-height:.9;letter-spacing:-.02em;margin:0;color:var(--deep)}
+  .kicker{font-family:var(--mono);font-size:13px;color:var(--soft);margin:14px 0 0}
+  .lede{font-size:18px;margin:20px 0 0;max-width:60ch}.lede b{font-weight:600}
+  .leirule{height:7px;border-radius:5px;margin:24px 0 0;background:linear-gradient(90deg,var(--planned),var(--winter),var(--free),var(--summer),var(--optional),var(--dinner))}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;z-index:20;background:var(--paper);padding:14px 0;border-bottom:1px solid var(--line)}
+  .tab{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.14em;padding:10px 16px;border:1px solid var(--deep);border-radius:100px;background:transparent;color:var(--deep);cursor:pointer;font-weight:700;transition:background .18s,color .18s}
+  .tab:hover{background:rgba(12,63,69,.08)}
+  .tab[aria-selected="true"]{background:var(--deep);color:#fff}
+  .tab:focus-visible{outline:3px solid var(--optional);outline-offset:2px}
+  .panel[hidden]{display:none}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 10px;margin:26px 0 6px}
+  .key{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.14em;padding:6px 11px;border:1px solid var(--line);border-radius:100px;background:var(--card)}
+  .dot{width:11px;height:11px;border-radius:3px;flex:none}
+  .note{font-size:14px;color:var(--soft);margin:14px 0 0}
+  .band{display:flex;align-items:baseline;gap:14px;margin:34px 0 22px}
+  .band .num{font-family:var(--mono);font-size:13px;color:var(--soft)}
+  .band h2{font-family:var(--display);font-weight:700;font-size:30px;margin:0;letter-spacing:-.01em;color:var(--deep)}
+  .band .rule{flex:1;height:1px;background:var(--line);align-self:center}
+  .day{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 18px;overflow:hidden;box-shadow:0 2px 10px rgba(14,58,60,.04)}
+  .spine{height:6px;display:flex}.spine span{flex:1}
+  .day-head{display:flex;align-items:baseline;gap:14px;padding:18px 22px 4px;flex-wrap:wrap}
+  .day-n{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--soft);letter-spacing:.1em;white-space:nowrap}
+  .day-t{font-family:var(--display);font-weight:700;font-size:24px;margin:0;letter-spacing:-.01em;color:var(--deep)}
+  .blocks{padding:8px 22px 20px}
+  .blk{display:grid;grid-template-columns:118px 1fr;gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+  .blk:first-child{border-top:0}
+  .tag{font-family:var(--mono);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;padding-top:3px}
+  .tag small{display:block;font-weight:400;letter-spacing:.06em;color:var(--soft);margin-top:4px;text-transform:none;font-size:10px;line-height:1.35}
+  .blk p{margin:0}.blk .lead{font-weight:600;margin:0 0 3px}.blk .sub{color:var(--soft);font-size:15px}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:100px;margin-left:6px;vertical-align:1px;border:1px solid currentColor}
+  .t-planned{color:var(--planned)}.t-optional{color:var(--optional)}.t-free{color:var(--free)}.t-dinner{color:var(--dinner)}
+  .bar-planned{background:var(--planned)}.bar-optional{background:var(--optional)}.bar-free{background:var(--free)}
+  .bar-dinner{background:var(--dinner)}.bar-summer{background:var(--summer)}.bar-winter{background:var(--winter)}.bar-food{background:var(--summer)}
+  .season-mark{background:linear-gradient(90deg,var(--summer) 0 50%,var(--winter) 50% 100%)}
+  .maplink{font-family:var(--mono);font-size:11px;color:var(--planned);text-decoration:none;border-bottom:1px dotted var(--planned);white-space:nowrap;margin-left:7px}
+  .maplink:hover{color:var(--optional);border-color:var(--optional)}
+  .guide{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;box-shadow:0 2px 10px rgba(14,58,60,.04)}
+  .guide > h3{font-family:var(--display);font-weight:700;font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px;color:var(--deep)}
+  .guide > h3 .chip{width:12px;height:12px;border-radius:4px;flex:none}
+  .guide .intro{color:var(--soft);font-size:15px;margin:0 0 16px}
+  .item{padding:11px 0;border-top:1px solid var(--line)}.item:first-of-type{border-top:0}
+  .item .name{font-weight:600}
+  .item .name .lv{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:2px 7px;border-radius:100px;margin-left:8px;border:1px solid var(--line);color:var(--soft)}
+  .item .desc{color:var(--soft);font-size:15px;margin:2px 0 0}
+  .item .where{font-family:var(--mono);font-size:12px;color:var(--planned);margin:5px 0 0}
+  .lv.easy{color:var(--free);border-color:var(--free)}.lv.mod{color:var(--summer);border-color:var(--summer)}.lv.hard{color:var(--optional);border-color:var(--optional)}
+  .guide ul.plain{margin:0;padding-left:18px}.guide ul.plain li{margin:0 0 7px}
+  .season-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .seasonbox{border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .seasonbox h4{font-family:var(--display);font-weight:700;font-size:18px;margin:0 0 3px;display:flex;align-items:center;gap:8px;color:var(--deep)}
+  .seasonbox h4 .chip{width:11px;height:11px;border-radius:4px}
+  .seasonbox .win{color:var(--soft);font-size:13px;font-family:var(--mono);margin:0 0 10px}
+  .seasonbox ul{margin:0;padding-left:18px}.seasonbox li{margin:0 0 7px;font-size:15px}
+  .controls{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:0 0 20px;box-shadow:0 2px 10px rgba(14,58,60,.04)}
+  .ctrow{display:flex;flex-wrap:wrap;gap:20px 26px;align-items:flex-start}
+  .field label{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--soft);margin:0 0 7px}
+  select{font-family:var(--body);font-size:16px;padding:10px 14px;border:1px solid var(--deep);border-radius:10px;background:var(--paper);color:var(--ink);min-width:80px}
+  .checks{display:flex;flex-direction:column;gap:10px}
+  .chk{display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
+  .chk input{width:20px;height:20px;accent-color:var(--planned);cursor:pointer;flex:none}
+  .subselect{margin-top:8px;margin-left:30px}.subselect[hidden]{display:none}
+  .pplive{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;background:var(--deep);color:#FFF7EA;border-radius:12px;padding:16px 20px;margin:0 0 20px}
+  .pplive .lab{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.16em;opacity:.8}
+  .pplive .big{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;color:var(--summer)}
+  .pplive .sec{margin-left:auto;font-family:var(--mono);font-size:13px;opacity:.85;text-align:right}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+  .preset{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;padding:9px 15px;border-radius:100px;border:1px solid var(--deep);background:transparent;color:var(--deep);cursor:pointer;font-weight:700}
+  .preset:hover{background:rgba(12,63,69,.08)}
+  .bgroup{margin:0 0 20px}
+  .bgroup h4{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 10px;color:var(--deep)}
+  .pick{display:grid;grid-template-columns:26px 1fr auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 16px;margin:0 0 9px;cursor:pointer;transition:border-color .15s}
+  .pick.on{border-color:var(--planned);box-shadow:0 0 0 1px var(--planned)}
+  .pick input{width:22px;height:22px;accent-color:var(--planned);cursor:pointer}
+  .pk-title{font-weight:600;display:block}
+  .pk-desc{color:var(--soft);font-size:14px;display:block;margin-top:2px}
+  .pk-price{font-family:var(--mono);font-weight:700;font-size:15px;white-space:nowrap}
+  .pk-price small{color:var(--soft);font-weight:400;font-size:11px}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .dlbtn{font-family:var(--mono);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;padding:15px 24px;border-radius:100px;border:none;background:var(--planned);color:#fff;cursor:pointer;flex:1;min-width:210px}
+  .dlbtn:hover{background:#0a6f7e}
+  .dlbtn.alt{background:transparent;color:var(--planned);border:1px solid var(--planned)}
+  .dlbtn.alt:hover{background:rgba(12,128,145,.08)}
+  .dlbtn:focus-visible{outline:3px solid var(--optional);outline-offset:2px}
+  .costgroup{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 18px;overflow:hidden;box-shadow:0 2px 10px rgba(14,58,60,.04)}
+  .ghead{display:flex;align-items:center;gap:10px;padding:16px 22px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .ghead .chip{width:12px;height:12px;border-radius:4px;flex:none}
+  .ghead h3{font-family:var(--display);font-weight:700;font-size:20px;margin:0;color:var(--deep)}
+  .ghead .gsum{margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700}
+  .ctable{width:100%;border-collapse:collapse}
+  .ctable th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--soft);text-align:right;font-weight:400;padding:12px 10px 8px;border-bottom:1px solid var(--line)}
+  .ctable th.l{text-align:left;padding-left:22px}.ctable th.pp{padding-right:22px}
+  .ctable td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-size:14px;vertical-align:top}
+  .ctable td.l{text-align:left;font-family:var(--body);font-size:16px;padding-left:22px;width:42%}
+  .ctable tr:last-child td{border-bottom:0}.ctable tr.off{opacity:.34}
+  .ctable .ttl{font-weight:600;display:block}
+  .ctable .dsc{color:var(--soft);font-size:13px;display:block;margin-top:2px;line-height:1.4}
+  .ctable td.pp{font-weight:700;padding-right:22px}
+  .totals{background:var(--deep);color:#FFF7EA;border-radius:14px;padding:24px 24px 20px;margin:26px 0 18px}
+  .totals h3{font-family:var(--display);font-weight:700;font-size:22px;margin:0 0 4px;color:#FFF7EA}
+  .totals .sub{font-size:14px;opacity:.75;margin:0 0 18px}
+  .trow{display:flex;align-items:baseline;gap:14px;padding:13px 0;border-top:1px solid rgba(255,247,234,.22)}
+  .trow:first-of-type{border-top:0}
+  .trow .tn{font-weight:600}.trow .td{opacity:.72;font-size:14px;display:block;font-weight:400;margin-top:2px}
+  .trow .tv{margin-left:auto;font-family:var(--mono);font-weight:700;font-size:19px;white-space:nowrap}
+  .grand{border-top:2px solid var(--summer);margin-top:6px;padding-top:16px}.grand .tv{font-size:26px;color:var(--summer)}
+  .foot{margin-top:60px;padding-top:22px;border-top:2px solid var(--deep);font-family:var(--mono);font-size:12px;color:var(--soft);line-height:1.7}
+  a{color:var(--planned);text-underline-offset:3px}
+  @media (max-width:640px){
+    .blk{grid-template-columns:1fr;gap:5px}.tag small{display:inline;margin-left:6px}
+    .season-grid{grid-template-columns:1fr}
+    .ctable th.hide,.ctable td.hide{display:none}
+    .ctable td.l{width:auto}
+    .ctable td,.ctable th{padding-left:14px;padding-right:14px}
+    .ctable td.pp,.ctable th.pp{padding-right:14px}
+  }
+  @media print{
+    body{background:#fff}.wrap{max-width:100%;padding:0}.tabs,.presets,.btnrow,.controls{display:none}
+    .panel[hidden]{display:block !important}
+    .day,.guide,.costgroup,.totals{break-inside:avoid;page-break-inside:avoid}
+    .totals{background:#fff;color:#000;border:2px solid #000}.totals h3{color:#000}.grand .tv{color:#000}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">Aloha — a hosted week on</p>
+    <h1>Oʻahu</h1>
+    <p class="kicker">7 days · planned, optional, and open · come and go as you please</p>
+    <p class="lede">A full week you can follow beat for beat — or ignore entirely. Browse <b>The Week</b>, tick what you want in <b>Build</b> and download or share your plan, and dial in the numbers under <b>Costs</b>. Dinners marked <b>open</b> are on purpose: that's when I clock out and come find you.</p>
+    <div class="leirule"></div>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Guide sections">
+    <button class="tab" role="tab" id="t-itin" aria-controls="p-itin" aria-selected="true">The Week</button>
+    <button class="tab" role="tab" id="t-build" aria-controls="p-build" aria-selected="false">Build</button>
+    <button class="tab" role="tab" id="t-costs" aria-controls="p-costs" aria-selected="false">Costs</button>
+    <button class="tab" role="tab" id="t-guides" aria-controls="p-guides" aria-selected="false">Guides</button>
+  </nav>
+  <section class="panel" id="p-itin" role="tabpanel" aria-labelledby="t-itin">
+    <div class="legend">
+      <span class="key"><span class="dot bar-planned"></span>Planned</span>
+      <span class="key"><span class="dot bar-optional"></span>Optional</span>
+      <span class="key"><span class="dot bar-free"></span>Free time</span>
+      <span class="key"><span class="dot bar-dinner"></span>Dinner</span>
+      <span class="key"><span class="dot season-mark"></span>Seasonal</span>
+    </div>
+    <p class="note">Planned = the safe, year-round backbone. Optional = fun if you're up for it. Free time = whatever you want. Tap <b>↗ Map</b> on any place to open directions.</p>
+    <div class="band"><span class="num">01</span><h2>The Week</h2><span class="rule"></span></div>
+    <article class="day">
+      <div class="spine"><span class="bar-planned"></span><span class="bar-optional"></span><span class="bar-free"></span><span class="bar-dinner"></span></div>
+      <div class="day-head"><span class="day-n">DAY 01</span><h3 class="day-t">Landing &amp; Waikīkī</h3></div>
+      <div class="blocks">
+        <div class="blk"><div class="tag t-planned">Planned</div><div><p class="lead">Arrive, drop bags, sink into Waikīkī. <a class="maplink" data-q="Waikiki Beach Honolulu">↗ Map</a></p><p class="sub">Toes in the water, a walk down the beach, first sunset on the sand. Beat the flight and get on island time.</p></div></div>
+        <div class="blk"><div class="tag t-optional">Optional</div><div><p class="sub">Sunset catamaran sail off the beach, or a slow lap of Kalākaua Ave for shave ice and people-watching.</p></div></div>
+        <div class="blk"><div class="tag t-dinner">Dinner<small>Planned</small></div><div><p class="lead">Welcome dinner — Duke's Waikīkī. <a class="maplink" data-q="Duke's Waikiki">↗ Map</a></p><p class="sub">Beachfront, easygoing, the classic first night. I'll meet you there.</p></div></div>
+      </div>
+    </article>
+    <article class="day">
+      <div class="spine"><span class="bar-planned"></span><span class="bar-optional"></span><span class="bar-free"></span><span class="bar-dinner"></span></div>
+      <div class="day-head"><span class="day-n">DAY 02</span><h3 class="day-t">Pearl Harbor</h3></div>
+      <div class="blocks">
+        <div class="blk"><div class="tag t-planned">Planned</div><div><p class="lead">The full Pearl Harbor day. <a class="maplink" data-q="Pearl Harbor National Memorial Visitor Center">↗ Map</a></p><p class="sub">The <b>Passport</b> covers all four sites — Arizona Memorial center, Battleship Missouri, USS Bowfin submarine, Aviation Museum. Reserve the <b>free</b> Arizona Memorial boat separately on recreation.gov; it sells out. No bags inside. Plan 6–9 hours.</p></div></div>
+        <div class="blk"><div class="tag t-optional">Optional</div><div><p class="sub">On the way back: Diamond Head, or downtown Honolulu and ʻIolani Palace.</p></div></div>
+        <div class="blk"><div class="tag t-free">Free time</div><div><p class="sub">It's a heavy day. Cash out on the beach in the afternoon if you'd rather.</p></div></div>
+        <div class="blk"><div class="tag t-dinner">Dinner<small>Open</small></div><div><p class="sub">I'm off — let's meet up. See <b>Dinner Options</b>.</p></div></div>
+      </div>
+    </article>
+    <article class="day">
+      <div class="spine"><span class="bar-free"></span><span class="bar-optional"></span><span class="bar-dinner"></span></div>
+      <div class="day-head"><span class="day-n">DAY 03</span><h3 class="day-t">Free Day <span class="pill t-free">yours</span></h3></div>
+      <div class="blocks">
+        <div class="blk"><div class="tag t-free">Free time</div><div><p class="lead">Nothing scheduled. On purpose.</p><p class="sub">Beach day at Lanikai or Kailua, a spa afternoon, shopping at Ala Moana, or genuinely nothing.</p></div></div>
+        <div class="blk"><div class="tag t-optional">Optional</div><div><p class="sub">A great day for a big optional: a hike, a snorkel, the shark cage dive, or a surf lesson.</p></div></div>
+        <div class="blk"><div class="tag t-dinner">Dinner<small>Open</small></div><div><p class="sub">Meet up when you're back.</p></div></div>
+      </div>
+    </article>
+    <article class="day">
+      <div class="spine"><span class="bar-planned"></span><span class="season-mark"></span><span class="bar-free"></span><span class="bar-dinner"></span></div>
+      <div class="day-head"><span class="day-n">DAY 04</span><h3 class="day-t">Circle-Island Tour</h3></div>
+      <div class="blocks">
+        <div class="blk"><div class="tag t-planned">Planned</div><div><p class="lead">Loop the whole island.</p><p class="sub">Nuʻuanu Pali lookout <a class="maplink" data-q="Nuuanu Pali Lookout">↗ Map</a> → Byōdō-In Temple <a class="maplink" data-q="Byodo-In Temple Kaneohe">↗ Map</a> → the Kualoa "Jurassic" coast <a class="maplink" data-q="Kualoa Regional Park">↗ Map</a> → North Shore, Waimea &amp; Haleʻiwa <a class="maplink" data-q="Waimea Bay Beach Park Oahu">↗ Map</a> → back through Dole. <a class="maplink" data-q="Dole Plantation Wahiawa">↗ Map</a></p></div></div>
+        <div class="blk"><div class="tag t-optional">Seasonal<small>see guide</small></div><div><p class="sub">Add a season-specific North Shore stop — whale watching in winter, Sharks Cove snorkel or the Waimea rock jump in summer.</p></div></div>
+        <div class="blk"><div class="tag t-dinner">Dinner<small>Open</small></div><div><p class="sub">Still up north? Haleʻiwa has great spots. Otherwise back in town with me.</p></div></div>
+      </div>
+    </article>
+    <article class="day">
+      <div class="spine"><span class="bar-free"></span><span class="bar-optional"></span><span class="bar-dinner"></span></div>
+      <div class="day-head"><span class="day-n">DAY 05</span><h3 class="day-t">Free Day <span class="pill t-free">yours</span></h3></div>
+      <div class="blocks">
+        <div class="blk"><div class="tag t-free">Free time</div><div><p class="lead">Second open day. Recharge or chase something.</p><p class="sub">A different beach, the Kakaʻako murals, a farmers market, or the pool.</p></div></div>
+        <div class="blk"><div class="tag t-optional">Optional</div><div><p class="sub">Whatever big-ticket you skipped on Day 3 — shark dive, snorkel, kayak to the Mokulua, another hike, or a seasonal add.</p></div></div>
+        <div class="blk"><div class="tag t-dinner">Dinner<small>Open</small></div><div><p class="sub">Meet up. See <b>Dinner Options</b>.</p></div></div>
+      </div>
+    </article>
+    <article class="day">
+      <div class="spine"><span class="bar-planned"></span><span class="bar-optional"></span><span class="bar-dinner"></span></div>
+      <div class="day-head"><span class="day-n">DAY 06</span><h3 class="day-t">Polynesian Cultural Center</h3></div>
+      <div class="blocks">
+        <div class="blk"><div class="tag t-planned">Planned</div><div><p class="lead">Afternoon into night at the PCC, Lāʻie. <a class="maplink" data-q="Polynesian Cultural Center Laie">↗ Map</a></p><p class="sub">Six island villages, the canoe pageant, the lūʻau buffet, and the evening show, <i>Hā: Breath of Life</i>. Book ahead — dinner is built into tonight.</p></div></div>
+        <div class="blk"><div class="tag t-optional">Optional</div><div><p class="sub">You're driving north anyway — make a morning of it: turtles at Laniakea, garlic shrimp in Kahuku, Matsumoto's shave ice.</p></div></div>
+        <div class="blk"><div class="tag t-dinner">Dinner<small>Covered</small></div><div><p class="sub">The lūʻau buffet at the PCC. No planning needed tonight.</p></div></div>
+      </div>
+    </article>
+    <article class="day">
+      <div class="spine"><span class="bar-planned"></span><span class="bar-optional"></span><span class="bar-free"></span></div>
+      <div class="day-head"><span class="day-n">DAY 07</span><h3 class="day-t">Last Morning &amp; Departure</h3></div>
+      <div class="blocks">
+        <div class="blk"><div class="tag t-planned">Planned</div><div><p class="lead">Slow it down.</p><p class="sub">Late breakfast, checkout, one more swim, a souvenir run.</p></div></div>
+        <div class="blk"><div class="tag t-optional">Optional</div><div><p class="sub">If the flight's late: a Diamond Head sunrise, a final snorkel, or Leonard's malasadas for the plane.</p></div></div>
+        <div class="blk"><div class="tag t-dinner">Dinner<small>Open, if late flight</small></div><div><p class="sub">One more with me before wheels-up.</p></div></div>
+      </div>
+    </article>
+  </section>
+  <section class="panel" id="p-build" role="tabpanel" aria-labelledby="t-build" hidden>
+    <div class="band"><span class="num">02</span><h2>Build Your Trip</h2><span class="rule"></span></div>
+    <p class="note" style="margin-top:-8px;max-width:62ch">Tick what you actually want to do. The planned backbone is checked by default; add or drop anything. Then download a personal PDF or copy a link that reopens this exact plan. (Prices follow your group size, set on the Costs tab.)</p>
+    <div class="pplive"><span class="lab">Your plan</span><span class="big" id="build-pp">$0</span><span class="lab">/ person</span><span class="sec" id="build-count">0 activities selected</span></div>
+    <div class="presets">
+      <button class="preset" data-preset="essentials">Essentials</button>
+      <button class="preset" data-preset="recommended">Recommended</button>
+      <button class="preset" data-preset="everything">Everything</button>
+      <button class="preset" data-preset="clear">Clear optional</button>
+    </div>
+    <div id="build-list"></div>
+    <p class="note">Food, dinners, and daily spending are always included in your cost — they're not activities to check off. Set your group size and add a hotel or rental car on the <b>Costs</b> tab.</p>
+    <div class="btnrow">
+      <button class="dlbtn" id="dlpdf">⬇ Download my plan (PDF)</button>
+      <button class="dlbtn alt" id="copylink">🔗 Copy shareable link</button>
+    </div>
+  </section>
+  <section class="panel" id="p-costs" role="tabpanel" aria-labelledby="t-costs" hidden>
+    <div class="band"><span class="num">03</span><h2>What It Costs</h2><span class="rule"></span></div>
+    <p class="note" style="margin-top:-8px;max-width:64ch">Per adult, in USD. Ticket prices are current published rates; meals and shared costs are estimates. Set your group size and shared extras below — <b>shared costs split cheaper as the group grows</b>. Excludes airfare.</p>
+    <div class="controls">
+      <div class="ctrow">
+        <div class="field">
+          <label for="people">Adults on the trip</label>
+          <select id="people"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select>
+        </div>
+        <div class="field" style="flex:1;min-width:240px">
+          <label>Shared extras</label>
+          <div class="checks">
+            <label class="chk"><input type="checkbox" id="hotel"> Book a place to stay <span style="color:var(--soft);font-size:13px">(otherwise staying with your host)</span></label>
+            <div class="subselect" id="hotelwrap" hidden>
+              <select id="hoteltier">
+                <option value="hostel">Hostel — ~$60/bed/night</option>
+                <option value="budget">Budget hotel — ~$180/room/night</option>
+                <option value="mid" selected>Mid-range — ~$300/room/night</option>
+                <option value="upscale">Upscale — ~$500/room/night</option>
+              </select>
+              <span style="color:var(--soft);font-size:13px;margin-left:8px" id="roomnote"></span>
+            </div>
+            <label class="chk"><input type="checkbox" id="car"> Rent a car <span style="color:var(--soft);font-size:13px">(~$80/day; your host may lend one)</span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pplive"><span class="lab">Per person</span><span class="big" id="cost-pp">$0</span><span class="sec" id="cost-note"></span></div>
+    <div id="cost-tables"></div>
+    <div class="totals">
+      <h3>The bottom line</h3>
+      <p class="sub" id="totsub">For your current selection.</p>
+      <div class="trow"><span class="tn">Per person<span class="td">Everything you've selected, per adult.</span></span><span class="tv" id="tot-pp">$0</span></div>
+      <div class="trow grand"><span class="tn">Whole group<span class="td" id="tot-group-note">All adults combined.</span></span><span class="tv" id="tot-group">$0</span></div>
+    </div>
+    <p class="note">The cheapest great days here — Lanikai, the pillbox hike, Makapuʻu, a North Shore drive — cost nothing but fuel.</p>
+  </section>
+  <section class="panel" id="p-guides" role="tabpanel" aria-labelledby="t-guides" hidden>
+    <div class="band"><span class="num">04</span><h2>The Guides</h2><span class="rule"></span></div>
+    <section class="guide">
+      <h3><span class="chip bar-winter"></span>Know Before You Go</h3>
+      <p class="intro">A few things that make the week smoother — and keep you on the island's good side.</p>
+      <ul class="plain">
+        <li><b>Reef-safe sunscreen only.</b> Hawaii bans sunscreens with oxybenzone and octinoxate — buy mineral (zinc). The reef and the law both thank you.</li>
+        <li><b>Give wildlife room.</b> Never touch or crowd sea turtles (honu) or monk seals. It's protected by law.</li>
+        <li><b>Shoes off indoors.</b> If you visit a local home, leave slippers at the door.</li>
+        <li><b>Carry some cash.</b> Shrimp trucks, shave ice stands, and farmers markets are often cash-only.</li>
+        <li><b>Respect the ocean.</b> Check surf and never turn your back on big waves. When in doubt, don't go out.</li>
+        <li><b>Book the big stuff early.</b> Arizona Memorial, Hanauma Bay, Diamond Head, shark dives, and the PCC all sell out.</li>
+        <li><b>Pack:</b> reef shoes, a light rain layer, a dry bag, and offline maps — parts of the North Shore have no signal.</li>
+      </ul>
+    </section>
+    <section class="guide">
+      <h3><span class="chip bar-optional"></span>Food to Try</h3>
+      <p class="intro">A plantation-era mashup — Hawaiian, Japanese, Chinese, Filipino, Korean, Portuguese. Work through this list and you've eaten Oʻahu properly.</p>
+      <div class="item"><div class="name">Poke</div><p class="desc">Cubed raw ahi in shoyu, sesame, and green onion — the staple.</p><p class="where">Ono Seafood · Maguro Brothers · Foodland <a class="maplink" data-q="Ono Seafood Honolulu">↗ Map</a></p></div>
+      <div class="item"><div class="name">Plate lunch &amp; Hawaiian BBQ</div><p class="desc">Two scoops rice, mac salad, and a protein.</p><p class="where">Rainbow Drive-In · Pioneer Saloon · Kōnō's <a class="maplink" data-q="Rainbow Drive-In Honolulu">↗ Map</a></p></div>
+      <div class="item"><div class="name">Hawaiian food</div><p class="desc">Kālua pig, laulau, lomi salmon, poi, haupia.</p><p class="where">Helena's Hawaiian Food · Highway Inn · Waiāhole Poi Factory <a class="maplink" data-q="Helena's Hawaiian Food Honolulu">↗ Map</a></p></div>
+      <div class="item"><div class="name">Garlic shrimp</div><p class="desc">Butter-garlic shrimp off a North Shore food truck.</p><p class="where">Giovanni's · Romy's · Famous Kahuku <a class="maplink" data-q="Giovanni's Shrimp Truck Kahuku">↗ Map</a></p></div>
+      <div class="item"><div class="name">Shave ice</div><p class="desc">Feather-fine ice and syrup over ice cream and azuki.</p><p class="where">Matsumoto's · Waiola · Uncle Clay's <a class="maplink" data-q="Matsumoto Shave Ice Haleiwa">↗ Map</a></p></div>
+      <div class="item"><div class="name">Malasadas</div><p class="desc">Portuguese sugar doughnuts — get the haupia-filled.</p><p class="where">Leonard's Bakery <a class="maplink" data-q="Leonard's Bakery Honolulu">↗ Map</a></p></div>
+      <div class="item"><div class="name">The snack canon</div><p class="desc">Loco moco, Spam musubi, manapua, and a Dole Whip.</p><p class="where">Manapua: Royal Kitchen · Dole Whip: Dole Plantation <a class="maplink" data-q="Royal Kitchen Chinatown Honolulu">↗ Map</a></p></div>
+    </section>
+    <section class="guide">
+      <h3><span class="chip bar-dinner"></span>Restaurants</h3>
+      <p class="intro">Sit-down spots worth the reservation, grouped by vibe.</p>
+      <div class="item"><div class="name">Beachfront classics</div><p class="desc">Duke's Waikīkī, Hula Grill, House Without a Key, Chart House.</p><p class="where"><a class="maplink" data-q="Duke's Waikiki">↗ Map Duke's</a></p></div>
+      <div class="item"><div class="name">Local grinds</div><p class="desc">Rainbow Drive-In, Helena's, Ono Seafood, Liliha Bakery, Marukame Udon.</p><p class="where"><a class="maplink" data-q="Liliha Bakery Honolulu">↗ Map Liliha Bakery</a></p></div>
+      <div class="item"><div class="name">Nicer / date-night</div><p class="desc">Roy's Hawaiʻi Kai, Mud Hen Water, MW Restaurant, Nami Kaze, Merriman's.</p><p class="where"><a class="maplink" data-q="Roy's Hawaii Kai">↗ Map Roy's</a></p></div>
+      <div class="item"><div class="name">North Shore &amp; Kailua</div><p class="desc">Haleʻiwa Joe's, Kōnō's, Buzz's, Over Easy.</p><p class="where"><a class="maplink" data-q="Haleiwa Joe's Haleiwa">↗ Map Haleʻiwa Joe's</a></p></div>
+      <div class="item"><div class="name">Chinatown</div><p class="desc">The Pig &amp; The Lady, Fête.</p><p class="where"><a class="maplink" data-q="The Pig and the Lady Honolulu">↗ Map</a></p></div>
+    </section>
+    <section class="guide">
+      <h3><span class="chip bar-free"></span>Hikes</h3>
+      <p class="intro">When the itinerary says "hiking," pick from here. Go early — trailhead parking fills and the sun is no joke.</p>
+      <div class="item"><div class="name">Diamond Head <span class="lv mod">Moderate</span> <a class="maplink" data-q="Diamond Head State Monument">↗ Map</a></div><p class="desc">Iconic crater rim with WWII bunkers. ~1.5–2 mi. Non-residents reserve online.</p></div>
+      <div class="item"><div class="name">Makapuʻu Lighthouse <span class="lv easy">Easy</span> <a class="maplink" data-q="Makapuu Point Lighthouse Trail">↗ Map</a></div><p class="desc">Paved, sweeping views. Whale-spotting perch in winter.</p></div>
+      <div class="item"><div class="name">Mānoa Falls <span class="lv mod">Moderate</span> <a class="maplink" data-q="Manoa Falls Trail">↗ Map</a></div><p class="desc">Rainforest walk to a 150-ft waterfall. Muddy, buggy, worth it.</p></div>
+      <div class="item"><div class="name">Lanikai Pillbox <span class="lv mod">Moderate</span> <a class="maplink" data-q="Kaiwa Ridge Lanikai Pillbox Trail">↗ Map</a></div><p class="desc">Short, steep — sunrise over the Mokulua islands.</p></div>
+      <div class="item"><div class="name">Kaʻena Point <span class="lv mod">Moderate</span> <a class="maplink" data-q="Kaena Point Trail Oahu">↗ Map</a></div><p class="desc">Flat coastal trek to the island's wild western tip.</p></div>
+      <div class="item"><div class="name">Koko Head Stairs <span class="lv hard">Hard</span> <a class="maplink" data-q="Koko Crater Railway Trailhead">↗ Map</a></div><p class="desc">1,000+ railway ties straight up. Brutal, huge payoff.</p></div>
+    </section>
+    <section class="guide">
+      <h3><span class="chip bar-optional"></span>Water &amp; Adventure</h3>
+      <p class="intro">The optional big-ticket stuff. Book the boats and tours ahead.</p>
+      <div class="item"><div class="name">Shark cage dive</div><p class="desc">Haleʻiwa Harbor, ~2 hrs, Galápagos &amp; sandbar sharks. No strong swimming needed; observer seats for the dry. Morning = calmest.</p><p class="where">North Shore Shark Adventures · Hawaii Shark Encounters <a class="maplink" data-q="Haleiwa Small Boat Harbor">↗ Map Haleʻiwa Harbor</a></p></div>
+      <div class="item"><div class="name">Snorkeling — Hanauma Bay</div><p class="desc">Best beginner reef. Closed Mon &amp; Tue; reservations open 2 days ahead at 7am HST and vanish fast.</p><p class="where">Backup: Turtle Canyon boat snorkel from Waikīkī <a class="maplink" data-q="Hanauma Bay Nature Preserve">↗ Map</a></p></div>
+      <div class="item"><div class="name">Surf lesson</div><p class="desc">Waikīkī's gentle rollers — the friendliest place to stand up for the first time.</p></div>
+      <div class="item"><div class="name">Catamaran sunset sail</div><p class="desc">Boards right off Waikīkī Beach.</p></div>
+      <div class="item"><div class="name">Kayak the Mokulua</div><p class="desc">Paddle from Kailua Beach to the twin islets.</p><p class="where"><a class="maplink" data-q="Kailua Beach Park Oahu">↗ Map Kailua Beach</a></p></div>
+      <div class="item"><div class="name">Kualoa Ranch</div><p class="desc">Jurassic Park movie-site tour, ATVs, ziplines, horseback.</p><p class="where"><a class="maplink" data-q="Kualoa Ranch">↗ Map</a></p></div>
+      <div class="item"><div class="name">Sky &amp; air</div><p class="desc">North Shore skydiving, or a doors-off helicopter tour.</p></div>
+    </section>
+    <section class="guide">
+      <h3><span class="chip season-mark"></span>Summer &amp; Winter</h3>
+      <p class="intro">Oʻahu is great year-round, but the ocean behaves very differently by season.</p>
+      <div class="season-grid">
+        <div class="seasonbox">
+          <h4><span class="chip bar-summer"></span>Summer</h4><p class="win">roughly May – Sept</p>
+          <ul><li>North Shore goes calm — snorkel Sharks Cove &amp; Three Tables, swim Waimea.</li>
+          <li>Try the Waimea Bay rock jump on flat days.</li><li>Best water clarity island-wide.</li>
+          <li>Electric Beach (west) for turtles and fish.</li><li>Long, hot days — hike at dawn.</li></ul>
+        </div>
+        <div class="seasonbox">
+          <h4><span class="chip bar-winter"></span>Winter</h4><p class="win">roughly Nov – March</p>
+          <ul><li>Humpback whale season — cruises, or spot them from Makapuʻu.</li>
+          <li>Big-wave season: Pipeline, Sunset, Waimea firing. Watch the pros.</li>
+          <li><b>Do not swim</b> the North Shore when it's big.</li>
+          <li>Waterfalls run full; trails green and muddy.</li><li>Waikīkī stays swimmable.</li></ul>
+        </div>
+      </div>
+    </section>
+    <section class="guide">
+      <h3><span class="chip bar-free"></span>Free-Time Ideas</h3>
+      <p class="intro">For the open days, if you don't feel like deciding.</p>
+      <div class="item"><div class="name">Beaches</div><p class="desc">Lanikai &amp; Kailua, Ala Moana Beach Park (calm), Waimānalo (long and quiet).</p><p class="where"><a class="maplink" data-q="Lanikai Beach Kailua">↗ Map Lanikai</a></p></div>
+      <div class="item"><div class="name">Shop &amp; stroll</div><p class="desc">Ala Moana Center, International Market Place, SALT at Kakaʻako for the murals.</p><p class="where"><a class="maplink" data-q="Ala Moana Center Honolulu">↗ Map Ala Moana</a></p></div>
+      <div class="item"><div class="name">Culture</div><p class="desc">Honolulu Museum of Art, Bishop Museum, ʻIolani Palace, Chinatown, the KCC farmers market.</p><p class="where"><a class="maplink" data-q="Iolani Palace Honolulu">↗ Map ʻIolani Palace</a></p></div>
+      <div class="item"><div class="name">Do nothing</div><p class="desc">The pool, a spa afternoon, sunset from Magic Island.</p></div>
+    </section>
+    <section class="guide">
+      <h3><span class="chip bar-dinner"></span>Dinner Options</h3>
+      <p class="intro">For the "open" nights — pick by where the day left you, and I'll meet you there.</p>
+      <div class="item"><div class="name">Waikīkī</div><p class="desc">Duke's, Hula Grill, Marukame Udon, Tommy Bahama.</p><p class="where"><a class="maplink" data-q="Marukame Udon Waikiki">↗ Map Marukame Udon</a></p></div>
+      <div class="item"><div class="name">Kaimukī / Kapahulu</div><p class="desc">Mud Hen Water, Rainbow Drive-In, Ono Seafood, Leonard's for dessert.</p><p class="where"><a class="maplink" data-q="Mud Hen Water Honolulu">↗ Map Mud Hen Water</a></p></div>
+      <div class="item"><div class="name">Kailua</div><p class="desc">Buzz's, Kōnō's, Over Easy.</p><p class="where"><a class="maplink" data-q="Buzz's Original Steakhouse Kailua">↗ Map Buzz's</a></p></div>
+      <div class="item"><div class="name">North Shore</div><p class="desc">Haleʻiwa Joe's, the shrimp trucks, Matsumoto's.</p><p class="where"><a class="maplink" data-q="Haleiwa Joe's Haleiwa">↗ Map</a></p></div>
+      <div class="item"><div class="name">Hawaiʻi Kai / east</div><p class="desc">Roy's, Kona Brewing.</p><p class="where"><a class="maplink" data-q="Kona Brewing Hawaii Kai">↗ Map Kona Brewing</a></p></div>
+      <div class="item"><div class="name">Chinatown</div><p class="desc">The Pig &amp; The Lady, Fête.</p><p class="where"><a class="maplink" data-q="Fete Honolulu Chinatown">↗ Map Fête</a></p></div>
+    </section>
+  </section>
+  <footer class="foot">
+    OʻAHU · A HOSTED WEEK<br>
+    Book ahead: Arizona Memorial boat (recreation.gov) · Hanauma Bay (2 days out, 7am HST) · Diamond Head · shark dive · PCC.<br>
+    "Open" dinners mean I'm off work and coming to find you. Everything here is a suggestion, not a schedule.
+  </footer>
+</div>
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('.tab'));
+  function selectTab(tab){
+    tabs.forEach(function(t){
+      var p=document.getElementById(t.getAttribute('aria-controls'));
+      var on=(t===tab); t.setAttribute('aria-selected',on?'true':'false'); p.hidden=!on;
+    });
+  }
+  tabs.forEach(function(tab,i){
+    tab.addEventListener('click',function(){selectTab(tab);});
+    tab.addEventListener('keydown',function(e){
+      var n=null;
+      if(e.key==='ArrowRight')n=tabs[(i+1)%tabs.length];
+      if(e.key==='ArrowLeft')n=tabs[(i-1+tabs.length)%tabs.length];
+      if(n){e.preventDefault();n.focus();selectTab(n);}
+    });
+  });
+  function mapURL(q){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q+' Oahu Hawaii');}
+  [].slice.call(document.querySelectorAll('a.maplink')).forEach(function(a){
+    a.href=mapURL(a.getAttribute('data-q')); a.target='_blank'; a.rel='noopener';
+  });
+  var NIGHTS=7, CARRATE=80, RATES={hostel:60,budget:180,mid:300,upscale:500};
+  var TIERNAME={hostel:'hostel',budget:'budget hotel',mid:'mid-range',upscale:'upscale'};
+  var ITEMS=[
+    {id:'pearl',grp:'planned',title:'Passport to Pearl Harbor',desc:'All four sites over two days.',amount:99.99,mode:'pp',qty:1,day:2},
+    {id:'arizona',grp:'planned',title:'USS Arizona reservation fee',desc:'recreation.gov service fee.',amount:1,mode:'pp',qty:1,day:2},
+    {id:'pearlpark',grp:'planned',title:'Pearl Harbor parking',desc:'$7 per vehicle, split by group.',amount:7,mode:'shared',qty:1,day:2},
+    {id:'pcc',grp:'planned',title:'Polynesian Cultural Center — Aliʻi Lūʻau',desc:'Villages, buffet, and evening show. Covers Day 6 dinner.',amount:225,mode:'pp',qty:1,day:6},
+    {id:'circle',grp:'planned',title:'Circle-island day — fuel & entries',desc:'Byōdō-In, Pali, Dole, gas. Split by group.',amount:88,mode:'shared',qty:1,day:4},
+    {id:'duke',grp:'planned',title:"Welcome dinner — Duke's Waikīkī",desc:'Entrée, a drink, tax and tip. Day 1.',amount:65,mode:'pp',qty:1,day:1},
+    {id:'shark',grp:'optional',title:'Shark cage dive',desc:'Haleʻiwa Harbor, ~2 hrs.',amount:140,mode:'pp',qty:1},
+    {id:'surf',grp:'optional',title:'Surf lesson',desc:'~2 hrs, Waikīkī, gear included.',amount:125,mode:'pp',qty:1},
+    {id:'kayak',grp:'optional',title:'Kayak the Mokulua',desc:'Half-day paddle from Kailua.',amount:75,mode:'pp',qty:1},
+    {id:'cat',grp:'optional',title:'Sunset catamaran sail',desc:'~2 hrs off Waikīkī, drinks in.',amount:70,mode:'pp',qty:1},
+    {id:'kualoa',grp:'optional',title:'Kualoa Ranch — movie tour',desc:'90-min Jurassic valley tour.',amount:55,mode:'pp',qty:1},
+    {id:'hanauma',grp:'optional',title:'Hanauma Bay snorkel',desc:'Entry + gear rental.',amount:48,mode:'pp',qty:1},
+    {id:'diamond',grp:'optional',title:'Diamond Head hike',desc:'Entry + vehicle share.',amount:8,mode:'pp',qty:1},
+    {id:'hikes',grp:'optional',title:'Other hikes',desc:'Mostly free; small parking fees.',amount:10,mode:'pp',qty:1},
+    {id:'dinners',grp:'food',title:'Open dinners',desc:'Four unscheduled nights out.',amount:65,mode:'pp',qty:4},
+    {id:'bl',grp:'food',title:'Breakfast & lunch',desc:'Plate lunches, cafés, trucks. 7 days.',amount:40,mode:'pp',qty:7},
+    {id:'snacks',grp:'food',title:'Snacks & treats',desc:'Shave ice, malasadas, poke, Dole Whip.',amount:12,mode:'pp',qty:7}
+  ];
+  var GROUPMETA={planned:['Planned','#0C8091'],optional:['Optional','#EE6C3A'],food:['Food & Daily','#C4820F']};
+  var state={people:4,hotel:false,hotelTier:'mid',car:false,items:{}};
+  function setDefaults(){ ITEMS.forEach(function(i){ state.items[i.id]=(i.grp==='planned'||i.grp==='food'); }); }
+  setDefaults();
+  function encodeState(){
+    var offP=ITEMS.filter(function(i){return i.grp==='planned'&&!state.items[i.id];}).map(function(i){return i.id;}).join('.');
+    var onO=ITEMS.filter(function(i){return i.grp==='optional'&&state.items[i.id];}).map(function(i){return i.id;}).join('.');
+    var q=['p='+state.people,'h='+(state.hotel?state.hotelTier:'0'),'c='+(state.car?1:0)];
+    if(offP)q.push('off='+offP); if(onO)q.push('on='+onO);
+    return q.join('&');
+  }
+  function applyFromURL(){
+    var raw=''; try{ raw=location.search.replace(/^\?/,'')||location.hash.replace(/^#/,''); }catch(e){}
+    if(!raw)return;
+    var q={}; raw.split('&').forEach(function(kv){var p=kv.split('=');if(p[0])q[p[0]]=decodeURIComponent(p[1]||'');});
+    setDefaults();
+    if(q.p){var n=parseInt(q.p,10); if(n>=1&&n<=8)state.people=n;}
+    if(q.h&&q.h!=='0'&&RATES[q.h]!=null){state.hotel=true;state.hotelTier=q.h;}
+    if(q.c==='1')state.car=true;
+    if(q.off)q.off.split('.').forEach(function(id){if(state.items[id]!=null)state.items[id]=false;});
+    if(q.on)q.on.split('.').forEach(function(id){if(state.items[id]!=null)state.items[id]=true;});
+  }
+  function updateURL(){ try{ history.replaceState(null,'','?'+encodeState()); }catch(e){} }
+  function shareURL(){
+    var qs=encodeState(), base='';
+    try{ if(location.protocol==='http:'||location.protocol==='https:') base=location.origin+location.pathname; }catch(e){}
+    return base? base+'?'+qs : '?'+qs;
+  }
+  function money(n){return '$'+Math.round(n).toLocaleString();}
+  function rooms(){return Math.ceil(state.people/2);}
+  function cars(){return Math.max(1,Math.ceil(state.people/5));}
+  function isHostel(){return state.hotelTier==='hostel';}
+  function hotelTotal(){ if(!state.hotel)return 0; return isHostel()? state.people*RATES.hostel*NIGHTS : rooms()*RATES[state.hotelTier]*NIGHTS; }
+  function carTotal(){ return state.car? cars()*CARRATE*NIGHTS : 0; }
+  function itemPP(i){ if(!state.items[i.id])return 0; return i.mode==='pp'? i.amount*i.qty : (i.amount*i.qty)/state.people; }
+  function perPersonAll(){ var t=0; ITEMS.forEach(function(i){t+=itemPP(i);}); t+=(hotelTotal()+carTotal())/state.people; return t; }
+  function bedsLabel(){ return isHostel()? (state.people+' bed'+(state.people>1?'s':'')) : (rooms()+' room'+(rooms()>1?'s':'')); }
+  function rateLabel(){ return isHostel()? ('$'+RATES.hostel+'/bed') : ('$'+RATES[state.hotelTier]+'/nt'); }
+  var buildList=document.getElementById('build-list');
+  function renderBuild(){
+    var html='';
+    ['planned','optional'].forEach(function(g){
+      var label=g==='planned'?'Planned — the year-round backbone':'Optional — add what you like';
+      html+='<div class="bgroup"><h4>'+label+'</h4>';
+      ITEMS.filter(function(i){return i.grp===g;}).forEach(function(i){
+        var on=state.items[i.id];
+        var price=i.mode==='pp'? i.amount*i.qty : (i.amount*i.qty)/state.people;
+        html+='<label class="pick'+(on?' on':'')+'"><input type="checkbox" data-id="'+i.id+'"'+(on?' checked':'')+'>'
+          +'<span><span class="pk-title">'+i.title+'</span><span class="pk-desc">'+i.desc+'</span></span>'
+          +'<span class="pk-price">'+money(price)+'<small>/pp</small></span></label>';
+      });
+      html+='</div>';
+    });
+    buildList.innerHTML=html;
+  }
+  buildList.addEventListener('change',function(e){
+    var id=e.target.getAttribute('data-id'); if(!id)return;
+    state.items[id]=e.target.checked; renderAll();
+  });
+  var costTables=document.getElementById('cost-tables');
+  function renderCosts(){
+    var html='';
+    ['planned','optional','food'].forEach(function(g){
+      var meta=GROUPMETA[g], sum=0;
+      ITEMS.filter(function(i){return i.grp===g;}).forEach(function(i){sum+=itemPP(i);});
+      html+='<div class="costgroup"><div class="ghead"><span class="chip" style="background:'+meta[1]+'"></span>'
+        +'<h3>'+meta[0]+'</h3><span class="gsum" style="color:'+meta[1]+'">'+money(sum)+' / person</span></div>'
+        +'<table class="ctable"><thead><tr><th class="l">Item</th><th>Cost</th><th class="hide">Qty</th><th class="pp">Per person</th></tr></thead><tbody>';
+      ITEMS.filter(function(i){return i.grp===g;}).forEach(function(i){
+        var on=state.items[i.id];
+        var shareNote=i.mode==='shared'?' <span style="color:var(--soft)">· split '+state.people+'</span>':'';
+        html+='<tr class="'+(on?'':'off')+'"><td class="l"><span class="ttl">'+i.title+'</span><span class="dsc">'+i.desc+shareNote+'</span></td>'
+          +'<td>$'+i.amount.toFixed(2)+'</td><td class="hide">'+i.qty+'</td><td class="pp">'+money(itemPP(i))+'</td></tr>';
+      });
+      html+='</tbody></table></div>';
+    });
+    var hotelDesc = state.hotel
+      ? (bedsLabel()+' × '+NIGHTS+' nights, '+TIERNAME[state.hotelTier]+(isHostel()?' (per bed)':', split '+state.people))
+      : 'Not booked — staying with your host';
+    var carDesc = state.car
+      ? (cars()+' car'+(cars()>1?'s':'')+' × '+NIGHTS+' days, split '+state.people)
+      : 'Not rented — your host may lend one';
+    var lodge='<tr class="'+(state.hotel?'':'off')+'"><td class="l"><span class="ttl">Place to stay</span><span class="dsc">'+hotelDesc+'</span></td>'
+      +'<td>'+(state.hotel?rateLabel():'—')+'</td><td class="hide">'+(state.hotel?NIGHTS:'—')+'</td><td class="pp">'+money(state.hotel?hotelTotal()/state.people:0)+'</td></tr>'
+      +'<tr class="'+(state.car?'':'off')+'"><td class="l"><span class="ttl">Rental car</span><span class="dsc">'+carDesc+'</span></td>'
+      +'<td>'+(state.car?'$'+CARRATE+'/day':'—')+'</td><td class="hide">'+(state.car?NIGHTS:'—')+'</td><td class="pp">'+money(state.car?carTotal()/state.people:0)+'</td></tr>';
+    var lodgeSum=(hotelTotal()+carTotal())/state.people;
+    html+='<div class="costgroup"><div class="ghead"><span class="chip" style="background:var(--winter)"></span>'
+      +'<h3>Stay & Getting Around</h3><span class="gsum" style="color:var(--winter)">'+money(lodgeSum)+' / person</span></div>'
+      +'<table class="ctable"><thead><tr><th class="l">Item</th><th>Rate</th><th class="hide">Nights</th><th class="pp">Per person</th></tr></thead><tbody>'
+      +lodge+'</tbody></table></div>';
+    costTables.innerHTML=html;
+    document.getElementById('roomnote').textContent = bedsLabel()+' for '+state.people+(isHostel()?' (per bed)':' (2 per room)');
+  }
+  function renderTotals(){
+    var pp=perPersonAll(), group=pp*state.people;
+    document.getElementById('build-pp').textContent=money(pp);
+    var cnt=ITEMS.filter(function(i){return (i.grp==='planned'||i.grp==='optional')&&state.items[i.id];}).length;
+    document.getElementById('build-count').textContent=cnt+' activit'+(cnt===1?'y':'ies')+' selected';
+    document.getElementById('cost-pp').textContent=money(pp);
+    document.getElementById('cost-note').textContent='for '+state.people+' adult'+(state.people>1?'s':'');
+    document.getElementById('tot-pp').textContent=money(pp);
+    document.getElementById('tot-group').textContent=money(group);
+    document.getElementById('tot-group-note').textContent=state.people+' adults combined.';
+  }
+  function renderAll(){ renderBuild(); renderCosts(); renderTotals(); updateURL(); }
+  function syncControls(){
+    document.getElementById('people').value=state.people;
+    document.getElementById('hotel').checked=state.hotel;
+    document.getElementById('hotelwrap').hidden=!state.hotel;
+    document.getElementById('hoteltier').value=state.hotelTier;
+    document.getElementById('car').checked=state.car;
+  }
+  document.getElementById('people').addEventListener('change',function(e){state.people=parseInt(e.target.value,10);renderAll();});
+  document.getElementById('hotel').addEventListener('change',function(e){state.hotel=e.target.checked;document.getElementById('hotelwrap').hidden=!e.target.checked;renderAll();});
+  document.getElementById('hoteltier').addEventListener('change',function(e){state.hotelTier=e.target.value;renderAll();});
+  document.getElementById('car').addEventListener('change',function(e){state.car=e.target.checked;renderAll();});
+  var PRESETS={essentials:[],recommended:['shark','hanauma','diamond','cat'],
+    everything:['shark','surf','kayak','cat','kualoa','hanauma','diamond','hikes'],clear:[]};
+  [].slice.call(document.querySelectorAll('.preset')).forEach(function(b){
+    b.addEventListener('click',function(){
+      var opt=PRESETS[b.getAttribute('data-preset')];
+      ITEMS.forEach(function(i){
+        if(i.grp==='planned'||i.grp==='food')state.items[i.id]=true;
+        if(i.grp==='optional')state.items[i.id]=opt.indexOf(i.id)>-1;
+      });
+      renderAll();
+    });
+  });
+  var copyBtn=document.getElementById('copylink');
+  copyBtn.addEventListener('click',function(){
+    var url=shareURL(), original='🔗 Copy shareable link';
+    function ok(){copyBtn.textContent='✓ Link copied!';setTimeout(function(){copyBtn.textContent=original;},1800);}
+    try{ navigator.clipboard.writeText(url).then(ok,function(){window.prompt('Copy this link:',url);}); }
+    catch(e){ window.prompt('Copy this link:',url); }
+  });
+  document.getElementById('dlpdf').addEventListener('click',function(){
+    try{
+      var jsPDF=window.jspdf.jsPDF, doc=new jsPDF({unit:'pt',format:'letter'});
+      var M=54,W=doc.internal.pageSize.getWidth(),y=M;
+      var ink=[14,58,60],teal=[12,128,145],orange=[238,108,58],soft=[93,107,102],gold=[200,138,31];
+      function line(txt,size,color,bold,gap){
+        doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);
+        doc.setTextColor(color[0],color[1],color[2]);
+        doc.splitTextToSize(txt,W-M*2).forEach(function(l){if(y>740){doc.addPage();y=M;}doc.text(l,M,y);y+=size+(gap||4);});
+      }
+      function rule(){doc.setDrawColor(220,209,190);doc.setLineWidth(1);doc.line(M,y,W-M,y);y+=14;}
+      doc.setFont('helvetica','bold');doc.setFontSize(30);doc.setTextColor(teal[0],teal[1],teal[2]);
+      doc.text("O\u02bbahu \u2014 A Hosted Week",M,y);y+=26;
+      line(state.people+" adult"+(state.people>1?'s':'')+"  \u00b7  plan generated "+new Date().toLocaleDateString(),11,soft,false,4);
+      y+=6;rule();
+      line("YOUR PLAN",12,orange,true,8);
+      var byday={},DAYS={1:'Day 1 · Waikiki',2:'Day 2 · Pearl Harbor',4:'Day 4 · Circle Island',6:'Day 6 · Polynesian Cultural Center'};
+      ITEMS.filter(function(i){return i.grp==='planned'&&state.items[i.id]&&i.day;}).forEach(function(i){(byday[i.day]=byday[i.day]||[]).push(i.title);});
+      [1,2,4,6].forEach(function(dn){if(byday[dn])line(DAYS[dn]+" — "+byday[dn].join(', '),12,ink,false,5);});
+      var opt=ITEMS.filter(function(i){return i.grp==='optional'&&state.items[i.id];});
+      if(opt.length){y+=4;line("Optional activities you're doing:",11,soft,true,5);opt.forEach(function(i){line("\u2022 "+i.title,12,ink,false,4);});}
+      else{y+=4;line("No optional activities selected — free days stay wide open.",12,ink,false,4);}
+      y+=10;rule();
+      line("STAY & GETTING AROUND",12,orange,true,8);
+      line(state.hotel?("Stay: "+TIERNAME[state.hotelTier]+" ("+rateLabel()+", "+bedsLabel()+")"):"Lodging: staying with your host",12,ink,false,5);
+      line(state.car?("Rental car: yes (~$"+CARRATE+"/day, "+cars()+" car"+(cars()>1?'s':'')+")"):"Car: your host's — no rental",12,ink,false,5);
+      y+=10;rule();
+      var pp=perPersonAll();
+      line("COST PER PERSON",12,orange,true,8);
+      doc.setFont('helvetica','bold');doc.setFontSize(30);doc.setTextColor(gold[0],gold[1],gold[2]);
+      doc.text(money(pp),M,y+8);y+=34;
+      line("Whole group ("+state.people+" adults): "+money(pp*state.people)+"  \u00b7  excludes airfare",11,soft,false,4);
+      y+=16;rule();
+      line("Book ahead: Arizona Memorial boat (recreation.gov), Hanauma Bay (2 days out, 7am HST), Diamond Head, shark dive, PCC.",10,soft,false,3);
+      doc.save("oahu-week-plan.pdf");
+    }catch(err){ window.print(); }
+  });
+  applyFromURL(); syncControls(); renderAll();
+})();
+</script>
+</body>
+</html>
