@@ -14,22 +14,33 @@ Two ways to take your plan with you:
 - **Download PDF** — generates a one-page summary of your selections via jsPDF (falls back to the browser print dialog if that fails).
 - **Copy shareable link** — encodes your whole plan in the query string, so opening the link restores that exact selection.
 
-## Running it
-
-It's one self-contained file. Open `index.html` directly, or serve it:
+## Layout
 
 ```
-python3 -m http.server 8000
+public/index.html   the entire site — one self-contained file
+wrangler.jsonc      Cloudflare Workers config (static assets)
+```
+
+## Running it
+
+Open `public/index.html` directly, or serve it:
+
+```
+npx wrangler dev
 ```
 
 The share-link feature builds absolute URLs only over `http`/`https`, so use a server rather than `file://` if you're testing that.
 
 ## Deploying
 
-No build step. Point Cloudflare Pages (or any static host) at the repo:
+Cloudflare Workers with static assets. No build step.
 
-- Build command: *(empty)*
-- Output directory: `/` (repo root)
+```
+npx wrangler login    # once
+npx wrangler deploy
+```
+
+Everything in `public/` is served as-is; `wrangler.jsonc` points at that directory, which keeps `README.md` and `.git` out of the upload.
 
 ## Note on external requests
 
